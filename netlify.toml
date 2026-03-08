@@ -2,9 +2,9 @@
   command = "npm run build"
   publish = "build"
 
-[functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"
+[[edge_functions]]
+  path = "/api/data"
+  function = "data"
 
 [[headers]]
   for = "/*"
