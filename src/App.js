@@ -18,11 +18,24 @@ const INITIAL_DATA = {
     coverage: "টেকনাফ, হ্নীলা, বাহারছড়া, শাহপরীর দ্বীপ",
     helpline: "01994-614914",
   },
+  distributionManager: {
+    name: "মো. আব্দুল করিম",
+    mobile: "01900-000001",
+    photo: "https://i.pravatar.cc/80?img=5",
+    address: "টেকনাফ সদর",
+  },
+  areaManager: {
+    name: "মো. জাহাঙ্গীর আলম",
+    mobile: "01900-000002",
+    photo: "https://i.pravatar.cc/80?img=8",
+    address: "টেকনাফ সদর",
+  },
+  showAreaManager: true,
   staff: [
-    { id: 1, code: "ST001", name: "মো. রফিক উদ্দিন", father: "মো. করিম উদ্দিন", address: "টেকনাফ সদর", mobile: "01811-111111", idNo: "1234567890", area: "টেকনাফ", photo: "https://i.pravatar.cc/80?img=11" },
-    { id: 2, code: "ST002", name: "সালমা বেগম", father: "মো. আলী হোসেন", address: "হ্নীলা, টেকনাফ", mobile: "01822-222222", idNo: "0987654321", area: "হ্নীলা", photo: "https://i.pravatar.cc/80?img=20" },
-    { id: 3, code: "ST003", name: "কামাল হোসেন", father: "নুরুল ইসলাম", address: "শাহপরীর দ্বীপ", mobile: "01833-333333", idNo: "1122334455", area: "শাহপরীর দ্বীপ", photo: "https://i.pravatar.cc/80?img=33" },
-    { id: 4, code: "ST004", name: "নাসরিন আক্তার", father: "মো. জাহাঙ্গীর", address: "বাহারছড়া, টেকনাফ", mobile: "01844-444444", idNo: "5566778899", area: "বাহারছড়া", photo: "https://i.pravatar.cc/80?img=47" },
+    { id: 1, code: "ST001", name: "মো. রফিক উদ্দিন", designation: "সেলস রিপ্রেজেন্টেটিভ", father: "মো. করিম উদ্দিন", address: "টেকনাফ সদর", mobile: "01811-111111", idNo: "1234567890", area: "টেকনাফ", photo: "https://i.pravatar.cc/80?img=11" },
+    { id: 2, code: "ST002", name: "সালমা বেগম", designation: "অফিস সহকারী", father: "মো. আলী হোসেন", address: "হ্নীলা, টেকনাফ", mobile: "01822-222222", idNo: "0987654321", area: "হ্নীলা", photo: "https://i.pravatar.cc/80?img=20" },
+    { id: 3, code: "ST003", name: "কামাল হোসেন", designation: "ডেলিভারি ম্যান", father: "নুরুল ইসলাম", address: "শাহপরীর দ্বীপ", mobile: "01833-333333", idNo: "1122334455", area: "শাহপরীর দ্বীপ", photo: "https://i.pravatar.cc/80?img=33" },
+    { id: 4, code: "ST004", name: "নাসরিন আক্তার", designation: "হিসাবরক্ষক", father: "মো. জাহাঙ্গীর", address: "বাহারছড়া, টেকনাফ", mobile: "01844-444444", idNo: "5566778899", area: "বাহারছড়া", photo: "https://i.pravatar.cc/80?img=47" },
   ],
   events: [
     { id: 1, name: "বার্ষিক বিতরণ সভা ২০২৬", caption: "সফলভাবে সম্পন্ন হলো আমাদের বার্ষিক বিতরণ সভা।", img: "https://picsum.photos/seed/event1/400/250" },
@@ -381,15 +394,57 @@ function PublicHome({ data }) {
           </div>
         </div>
       </div>
+      {/* Distribution Manager Panel */}
+      <div className="public-section" style={{ background: "linear-gradient(135deg,#162032,#1a2a3e)", borderBottom: "1px solid var(--border)" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 20px" }}>
+          <div className="section-title" style={{ marginBottom: 20 }}>ডিস্ট্রিবিউশন ম্যানেজার</div>
+          <div className="card" style={{ padding: 24, display: "flex", alignItems: "center", gap: 20, maxWidth: 480, background: "linear-gradient(135deg,#1e2d42,#243550)", border: "1px solid rgba(232,160,32,0.3)" }}>
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <ImgWithFallback src={data.distributionManager?.photo} alt="" style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: "3px solid var(--gold)" }} />
+              <div style={{ position: "absolute", bottom: -4, left: "50%", transform: "translateX(-50%)", background: "var(--gold)", color: "#0f1923", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 10, whiteSpace: "nowrap" }}>DM</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "var(--gold)", fontWeight: 600, marginBottom: 4, letterSpacing: 1 }}>DISTRIBUTION MANAGER</div>
+              <div style={{ fontFamily: "'Tiro Bangla', serif", fontSize: 20, color: "var(--text)", marginBottom: 4 }}>{data.distributionManager?.name}</div>
+              <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 2 }}>📍 {data.distributionManager?.address}</div>
+              <div style={{ fontSize: 13, color: "var(--muted)" }}>📞 {data.distributionManager?.mobile}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Area Manager Panel */}
+      {data.showAreaManager && data.areaManager?.name && (
+        <div className="public-section" style={{ background: "linear-gradient(135deg,#1a2535,#1e2d42)", borderBottom: "1px solid var(--border)" }}>
+          <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 20px" }}>
+            <div className="section-title" style={{ marginBottom: 20 }}>এরিয়া ম্যানেজার</div>
+            <div className="card" style={{ padding: 24, display: "flex", alignItems: "center", gap: 20, maxWidth: 480, background: "linear-gradient(135deg,#1e2d42,#243550)", border: "1px solid rgba(42,125,225,0.3)" }}>
+              <div style={{ position: "relative", flexShrink: 0 }}>
+                <ImgWithFallback src={data.areaManager?.photo} alt="" style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: "3px solid var(--blue)" }} />
+                <div style={{ position: "absolute", bottom: -4, left: "50%", transform: "translateX(-50%)", background: "var(--blue)", color: "#fff", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 10, whiteSpace: "nowrap" }}>AM</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: "var(--blue)", fontWeight: 600, marginBottom: 4, letterSpacing: 1 }}>AREA MANAGER</div>
+                <div style={{ fontFamily: "'Tiro Bangla', serif", fontSize: 20, color: "var(--text)", marginBottom: 4 }}>{data.areaManager?.name}</div>
+                <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 2 }}>📍 {data.areaManager?.address}</div>
+                <div style={{ fontSize: 13, color: "var(--muted)" }}>📞 {data.areaManager?.mobile}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Staff List */}
       <div className="public-section">
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 20px" }}>
           <div className="section-title" style={{ marginBottom: 24 }}>কর্মচারী তালিকা</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
             {data.staff.map(s => (
-              <div key={s.id} className="card animate-in" style={{ padding: 20, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 10 }}>
+              <div key={s.id} className="card animate-in" style={{ padding: 20, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 8 }}>
                 <ImgWithFallback src={s.photo} alt={s.name} style={{ width: 70, height: 70, borderRadius: "50%", border: "2px solid var(--border)", objectFit: "cover" }} />
                 <div style={{ fontWeight: 600, fontSize: 15 }}>{s.name}</div>
-                <div style={{ background: "var(--navy3)", borderRadius: 6, padding: "2px 10px", fontSize: 12, color: "var(--gold)" }}>{s.area}</div>
+                {s.designation && <div style={{ background: "rgba(232,160,32,0.12)", border: "1px solid rgba(232,160,32,0.25)", borderRadius: 6, padding: "2px 10px", fontSize: 11, color: "var(--gold)", fontWeight: 600 }}>{s.designation}</div>}
+                <div style={{ background: "var(--navy3)", borderRadius: 6, padding: "2px 10px", fontSize: 11, color: "var(--muted)" }}>{s.area}</div>
                 <div style={{ color: "var(--muted)", fontSize: 13 }}>📞 {s.mobile}</div>
               </div>
             ))}
@@ -477,13 +532,49 @@ function AttendancePage({ onSubmit }) {
 function StaffPage({ data }) {
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 20px" }}>
-      <div className="section-title" style={{ marginBottom: 24 }}>কর্মচারী তালিকা</div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 16 }}>
+      {/* Distribution Manager */}
+      {data.distributionManager?.name && (
+        <div style={{ marginBottom: 32 }}>
+          <div className="section-title" style={{ marginBottom: 16 }}>ডিস্ট্রিবিউশন ম্যানেজার</div>
+          <div className="card" style={{ padding: 20, display: "flex", alignItems: "center", gap: 16, maxWidth: 420, border: "1px solid rgba(232,160,32,0.3)" }}>
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <ImgWithFallback src={data.distributionManager.photo} alt="" style={{ width: 70, height: 70, borderRadius: "50%", objectFit: "cover", border: "3px solid var(--gold)" }} />
+              <div style={{ position: "absolute", bottom: -4, left: "50%", transform: "translateX(-50%)", background: "var(--gold)", color: "#0f1923", fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 10 }}>DM</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 10, color: "var(--gold)", fontWeight: 700, letterSpacing: 1, marginBottom: 3 }}>DISTRIBUTION MANAGER</div>
+              <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 3 }}>{data.distributionManager.name}</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>📞 {data.distributionManager.mobile}</div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Area Manager */}
+      {data.showAreaManager && data.areaManager?.name && (
+        <div style={{ marginBottom: 32 }}>
+          <div className="section-title" style={{ marginBottom: 16 }}>এরিয়া ম্যানেজার</div>
+          <div className="card" style={{ padding: 20, display: "flex", alignItems: "center", gap: 16, maxWidth: 420, border: "1px solid rgba(42,125,225,0.3)" }}>
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <ImgWithFallback src={data.areaManager.photo} alt="" style={{ width: 70, height: 70, borderRadius: "50%", objectFit: "cover", border: "3px solid var(--blue)" }} />
+              <div style={{ position: "absolute", bottom: -4, left: "50%", transform: "translateX(-50%)", background: "var(--blue)", color: "#fff", fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 10 }}>AM</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 10, color: "var(--blue)", fontWeight: 700, letterSpacing: 1, marginBottom: 3 }}>AREA MANAGER</div>
+              <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 3 }}>{data.areaManager.name}</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>📞 {data.areaManager.mobile}</div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Staff */}
+      <div className="section-title" style={{ marginBottom: 20 }}>কর্মচারী তালিকা</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
         {data.staff.map(s => (
-          <div key={s.id} className="card animate-in" style={{ padding: 20, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 10 }}>
+          <div key={s.id} className="card animate-in" style={{ padding: 20, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 8 }}>
             <ImgWithFallback src={s.photo} alt={s.name} style={{ width: 70, height: 70, borderRadius: "50%", border: "2px solid var(--gold)", objectFit: "cover" }} />
             <div style={{ fontWeight: 600, fontSize: 15 }}>{s.name}</div>
-            <div style={{ background: "var(--navy3)", borderRadius: 6, padding: "2px 10px", fontSize: 12, color: "var(--gold)" }}>{s.area}</div>
+            {s.designation && <div style={{ background: "rgba(232,160,32,0.12)", border: "1px solid rgba(232,160,32,0.25)", borderRadius: 6, padding: "2px 10px", fontSize: 11, color: "var(--gold)", fontWeight: 600 }}>{s.designation}</div>}
+            <div style={{ background: "var(--navy3)", borderRadius: 6, padding: "2px 10px", fontSize: 11, color: "var(--muted)" }}>{s.area}</div>
             <div style={{ color: "var(--muted)", fontSize: 13 }}>📞 {s.mobile}</div>
           </div>
         ))}
@@ -802,7 +893,7 @@ function StaffTab({ data, setData, isAdmin }) {
         </div>
         <div style={{ overflowX: "auto" }}>
           <table>
-            <thead><tr><th>ছবি</th><th>কোড</th><th>নাম</th><th>পিতা/মাতা</th><th>মোবাইল</th><th>এরিয়া</th>{isAdmin && <th>অ্যাকশন</th>}</tr></thead>
+            <thead><tr><th>ছবি</th><th>কোড</th><th>নাম</th><th>পদবী</th><th>পিতা/মাতা</th><th>মোবাইল</th><th>এরিয়া</th>{isAdmin && <th>অ্যাকশন</th>}</tr></thead>
             <tbody>
               {data.staff.length === 0 ? <tr><td colSpan={isAdmin ? 7 : 6} style={{ textAlign: "center", color: "var(--muted)", padding: 30 }}>কোনো কর্মচারী নেই।</td></tr>
                 : data.staff.map(s => (
@@ -810,6 +901,7 @@ function StaffTab({ data, setData, isAdmin }) {
                     <td><ImgWithFallback src={s.photo} alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", border: "1px solid var(--border)" }} /></td>
                     <td><span style={{ fontFamily: "monospace", color: "var(--gold)", fontSize: 13 }}>{s.code}</span></td>
                     <td style={{ fontWeight: 500 }}>{s.name}</td>
+                    <td><span style={{ background: "rgba(232,160,32,0.1)", border: "1px solid rgba(232,160,32,0.2)", borderRadius: 6, padding: "2px 8px", fontSize: 12, color: "var(--gold)" }}>{s.designation || "—"}</span></td>
                     <td style={{ color: "var(--muted)", fontSize: 13 }}>{s.father}</td>
                     <td style={{ fontSize: 13 }}>{s.mobile}</td>
                     <td><span style={{ background: "var(--navy3)", borderRadius: 6, padding: "2px 8px", fontSize: 12, color: "var(--muted)" }}>{s.area}</span></td>
@@ -826,7 +918,7 @@ function StaffTab({ data, setData, isAdmin }) {
       {(modal === "add" || modal === "edit") && <div className="modal-overlay"><div className="modal scrollbar-thin" style={{ maxWidth: 540, maxHeight: "90vh", overflowY: "auto" }}>
         <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 20, color: "var(--gold)" }}>{modal === "add" ? "নতুন কর্মচারী" : "কর্মচারী সম্পাদনা"}</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          {[["code", "কোড"], ["name", "নাম"], ["father", "পিতা/মাতা"], ["address", "ঠিকানা"], ["mobile", "মোবাইল"], ["idNo", "আইডি নম্বর"], ["area", "এরিয়া"]].map(([k, l]) => (
+          {[["code", "কোড"], ["name", "নাম"], ["designation", "পদবী"], ["father", "পিতা/মাতা"], ["address", "ঠিকানা"], ["mobile", "মোবাইল"], ["idNo", "আইডি নম্বর"], ["area", "এরিয়া"]].map(([k, l]) => (
             <div key={k} style={{ gridColumn: ["address", "father"].includes(k) ? "span 2" : "span 1" }}>
               <label>{l}</label><input value={form[k] || ""} onChange={e => setForm(f => ({ ...f, [k]: e.target.value }))} />
             </div>
@@ -972,8 +1064,8 @@ function ContentTab({ data, setData, isAdmin }) {
   const [eForm, setEForm] = useState({ name: "", caption: "", img: "" });
   const [oForm, setOForm] = useState({ title: "", desc: "", img: "" });
   const [dForm, setDForm] = useState({});
-  const openDistModal = () => { setDForm({ ...data.distributionInfo, logo: data.owner?.logo || "", ownerName: data.owner?.name || "", ownerAddress: data.owner?.address || "", ownerPhoto: data.owner?.photo || "" }); setDistModal(true); };
-  const saveDist = () => { const { logo, ownerName, ownerAddress, ownerPhoto, ...distInfo } = dForm; setData(d => ({ ...d, distributionInfo: { ...distInfo }, owner: { ...d.owner, logo: logo || d.owner.logo, name: ownerName || d.owner.name, address: ownerAddress || d.owner.address, photo: ownerPhoto || d.owner.photo } })); setDistModal(false); };
+  const openDistModal = () => { setDForm({ ...data.distributionInfo, logo: data.owner?.logo || "", ownerName: data.owner?.name || "", ownerAddress: data.owner?.address || "", ownerPhoto: data.owner?.photo || "", dmName: data.distributionManager?.name || "", dmMobile: data.distributionManager?.mobile || "", dmAddress: data.distributionManager?.address || "", dmPhoto: data.distributionManager?.photo || "", amName: data.areaManager?.name || "", amMobile: data.areaManager?.mobile || "", amAddress: data.areaManager?.address || "", amPhoto: data.areaManager?.photo || "", showAM: data.showAreaManager !== false }); setDistModal(true); };
+  const saveDist = () => { const { logo, ownerName, ownerAddress, ownerPhoto, dmName, dmMobile, dmAddress, dmPhoto, amName, amMobile, amAddress, amPhoto, showAM, ...distInfo } = dForm; setData(d => ({ ...d, distributionInfo: { ...distInfo }, owner: { ...d.owner, logo: logo || d.owner.logo, name: ownerName || d.owner.name, address: ownerAddress || d.owner.address, photo: ownerPhoto || d.owner.photo }, distributionManager: { name: dmName, mobile: dmMobile, address: dmAddress, photo: dmPhoto }, areaManager: { name: amName, mobile: amMobile, address: amAddress, photo: amPhoto }, showAreaManager: showAM })); setDistModal(false); };
   const openEditNotice = (n) => { setNForm({ text: n.text, date: n.date }); setEditNoticeModal(n.id); };
   const saveEditNotice = () => { setData(d => ({ ...d, notices: d.notices.map(n => n.id === editNoticeModal ? { ...n, text: nForm.text, date: nForm.date || n.date } : n) })); setEditNoticeModal(null); setNForm({ text: "", date: "" }); };
   const openEditEvent = (e) => { setEForm({ name: e.name, caption: e.caption, img: e.img }); setEditEventModal(e.id); };
@@ -1085,6 +1177,32 @@ function ContentTab({ data, setData, isAdmin }) {
           <div><label>📦 পণ্য</label><input value={dForm.products || ""} onChange={e => setDForm(f => ({ ...f, products: e.target.value }))} /></div>
           <div><label>🗺️ কভারেজ এরিয়া</label><input value={dForm.coverage || ""} onChange={e => setDForm(f => ({ ...f, coverage: e.target.value }))} /></div>
           <div><label>📞 হেল্পলাইন</label><input value={dForm.helpline || ""} onChange={e => setDForm(f => ({ ...f, helpline: e.target.value }))} /></div>
+          <div style={{ background: "var(--navy3)", borderRadius: 8, padding: "12px 14px" }}>
+            <div style={{ fontSize: 12, color: "var(--gold)", fontWeight: 700, marginBottom: 10 }}>🏢 ডিস্ট্রিবিউশন ম্যানেজার</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div><label>নাম</label><input value={dForm.dmName || ""} onChange={e => setDForm(f => ({ ...f, dmName: e.target.value }))} /></div>
+              <div><label>মোবাইল</label><input value={dForm.dmMobile || ""} onChange={e => setDForm(f => ({ ...f, dmMobile: e.target.value }))} /></div>
+              <div><label>ঠিকানা</label><input value={dForm.dmAddress || ""} onChange={e => setDForm(f => ({ ...f, dmAddress: e.target.value }))} /></div>
+              <div><label>ছবি</label><ImageInputWithUpload value={dForm.dmPhoto || ""} onChange={v => setDForm(f => ({ ...f, dmPhoto: v }))} previewStyle={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--gold)" }} /></div>
+            </div>
+          </div>
+          <div style={{ background: "var(--navy3)", borderRadius: 8, padding: "12px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <div style={{ fontSize: 12, color: "var(--blue)", fontWeight: 700 }}>🗺️ এরিয়া ম্যানেজার</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 12, color: "var(--muted)" }}>পাবলিকে দেখাবে?</span>
+                <div onClick={() => setDForm(f => ({ ...f, showAM: !f.showAM }))} style={{ width: 40, height: 22, borderRadius: 11, background: dForm.showAM ? "var(--green)" : "var(--border)", cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
+                  <div style={{ position: "absolute", top: 3, left: dForm.showAM ? 20 : 3, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left 0.2s" }} />
+                </div>
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div><label>নাম</label><input value={dForm.amName || ""} onChange={e => setDForm(f => ({ ...f, amName: e.target.value }))} /></div>
+              <div><label>মোবাইল</label><input value={dForm.amMobile || ""} onChange={e => setDForm(f => ({ ...f, amMobile: e.target.value }))} /></div>
+              <div><label>ঠিকানা</label><input value={dForm.amAddress || ""} onChange={e => setDForm(f => ({ ...f, amAddress: e.target.value }))} /></div>
+              <div><label>ছবি</label><ImageInputWithUpload value={dForm.amPhoto || ""} onChange={v => setDForm(f => ({ ...f, amPhoto: v }))} previewStyle={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--blue)" }} /></div>
+            </div>
+          </div>
         </div>
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 20 }}>
           <button className="btn btn-ghost" onClick={() => setDistModal(false)}>বাতিল</button>
