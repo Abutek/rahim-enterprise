@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Data Import Tool</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #0f1923; color: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+  .box { background: #1a2535; border-radius: 12px; padding: 40px; max-width: 500px; width: 90%; text-align: center; }
+  h2 { color: #e8a020; margin-bottom: 10px; }
+  p { color: #aaa; font-size: 14px; margin-bottom: 24px; }
+  button { background: #e8a020; color: #0f1923; border: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; width: 100%; margin-bottom: 10px; }
+  button:hover { background: #f0b030; }
+  button:disabled { background: #555; color: #999; cursor: not-allowed; }
+  .status { margin-top: 16px; padding: 14px; border-radius: 8px; font-size: 14px; display: none; }
+  .success { background: rgba(39,174,96,0.15); border: 1px solid #27ae60; color: #27ae60; }
+  .error { background: rgba(232,64,64,0.15); border: 1px solid #e84040; color: #e84040; }
+  .loading { background: rgba(232,160,32,0.15); border: 1px solid #e8a020; color: #e8a020; }
+</style>
+</head>
+<body>
+<div class="box">
+  <h2>📦 ডেটা Import Tool</h2>
+  <p>পুরানো সাইটের সকল ডেটা ও পাসওয়ার্ড নতুন সাইটে import করুন।</p>
+  <button onclick="importAll()" id="btn">▶ সব ডেটা Import করুন</button>
+  <div class="status" id="status"></div>
+</div>
+
+<script>
+const MAIN_DATA = {"notices":[],"owner":{"name":"রহিম উল্লাহ","address":"টেকনাফ, কক্সবাজার, চট্টগ্রাম","photo":"https://i.ibb.co.com/SDxXMnr7/Rahim-Bhai.jpg","logo":"https://i.ibb.co.com/Bp60s1J/Blue-Minimalist-Globe-Logo.jpg"},"distributionInfo":{"products":"বাংলালিংক সিম, ডেটা প্যাক,কম্বো প্যাক,মিনিট প্যাক, রিচার্জ,রাউটার","coverage":"সাবরাং,টেকনাফ,সেন্টমার্টিন,হ্নীলা,হোয়াইক্যং,শাপলাপুর।","helpline":"01994-614914"},"staff":[{"code":"NAS1011","name":"শওকত আলী","father":"মৃত কবির আহমদ-পদ্মা বানু","address":"দক্ষিণ লেংগুরবিল","mobile":"01935607204","idNo":"2874244151","area":"টেকনাফ সদর","photo":"https://i.ibb.co.com/1Yp2wW76/image.png","id":1773029084414,"designation":"Retail Sales Officer (RSO)"},{"code":"25","name":"সাদ্দাম হোসেন","father":"মোহাম্মদ ইসলাম/মলকা বানু","address":"মহেশ খালীয়া পাড়া","mobile":"01538232313","idNo":"6929245360","area":"সী বিচ এবং লেংগুর বিল","photo":"https://i.ibb.co.com/hF5Zr6g4/Whats-App-Image-2026-03-05-at-7-16-17-PM.jpg","id":1773030100286,"designation":"Retail Sales Officer (RSO)"},{"code":"10","name":"শহীদ উল্লাহ শহীদ","father":"মোহাম্মদ হোছাইন-রাজিয়া বেগম","address":"হ্নীলা পূর্ব সিকদার, টেকনাফ, কক্সবাজার","mobile":"01839763370","idNo":"2422861365","area":"হ্নীলা পানখালী রোড","photo":"https://i.ibb.co.com/dJL5fJ5n/image.png","designation":"Retail Sales Officer (RSO)","id":1773031912840}],"events":[],"accounting":[],"accountingRules":[],"attendance":[],"offers":[],"customTabs":[],"distributionManager":{"name":"আবু বক্কর ছিদ্দিক ","mobile":"01609669253","address":"ডেগিল্যার বিল,সাবরাং","photo":"https://i.ibb.co.com/Kp2kM754/Abu-Bakkar-Pic.png"},"areaManager":{"name":"মো: জাওয়াদ সিদ্দিক সাফি","mobile":"01901-455250","address":"কুমিল্লা","photo":"https://i.ibb.co.com/dsdQb4vV/Passport-Size-Photo-of-Md-Jawad-Siddique-Shafi-jpg.jpg"},"showAreaManager":true};
+
+const USERS_DATA = {"admin":"Abu@253","readonly":"view123"};
+
+function show(msg, type) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status ' + type;
+  el.style.display = 'block';
+}
+
+async function postData(key, value) {
+  const res = await fetch('/api/data', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key, value: JSON.stringify(value) })
+  });
+  const json = await res.json();
+  if (!json.ok) throw new Error('Failed: ' + key);
+}
+
+async function importAll() {
+  const btn = document.getElementById('btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Import হচ্ছে...';
+  show('ডেটা পাঠানো হচ্ছে...', 'loading');
+  try {
+    show('📦 মূল ডেটা import হচ্ছে...', 'loading');
+    await postData('rahim_data', MAIN_DATA);
+    show('🔐 পাসওয়ার্ড import হচ্ছে...', 'loading');
+    await postData('rahim_users', USERS_DATA);
+    show('✅ সফলভাবে সব import হয়েছে! এখন সাইটের হোমপেজে যান এবং পাসওয়ার্ড দিয়ে লগইন করুন: admin / Abu@253', 'success');
+    btn.textContent = '✅ সম্পন্ন';
+  } catch(e) {
+    show('❌ Error: ' + e.message, 'error');
+    btn.disabled = false;
+    btn.textContent = '🔄 আবার চেষ্টা করুন';
+  }
+}
+</script>
+</body>
+</html>
