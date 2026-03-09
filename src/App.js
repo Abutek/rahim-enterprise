@@ -1,6 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react"; // v20260309053406
-
-// ===================== INITIAL DATA =====================
+import { useState, useEffect, useRef, useCallback } from "react"; // v20260309053901// ===================== INITIAL DATA =====================
 const INITIAL_DATA = {
   notices: [
     { id: 1, text: "আগামী ১৫ই মার্চ অফিস বন্ধ থাকবে।", date: "2026-03-03" },
@@ -532,23 +530,6 @@ function AttendancePage({ onSubmit }) {
 function StaffPage({ data }) {
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 20px" }}>
-      {/* Distribution Manager */}
-      {data.distributionManager?.name && (
-        <div style={{ marginBottom: 32 }}>
-          <div className="section-title" style={{ marginBottom: 16 }}>ডিস্ট্রিবিউশন ম্যানেজার</div>
-          <div className="card" style={{ padding: 20, display: "flex", alignItems: "center", gap: 16, maxWidth: 420, border: "1px solid rgba(232,160,32,0.3)" }}>
-            <div style={{ position: "relative", flexShrink: 0 }}>
-              <ImgWithFallback src={data.distributionManager.photo} alt="" style={{ width: 70, height: 70, borderRadius: "50%", objectFit: "cover", border: "3px solid var(--gold)" }} />
-              <div style={{ position: "absolute", bottom: -4, left: "50%", transform: "translateX(-50%)", background: "var(--gold)", color: "#0f1923", fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 10 }}>DM</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 10, color: "var(--gold)", fontWeight: 700, letterSpacing: 1, marginBottom: 3 }}>DISTRIBUTION MANAGER</div>
-              <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 3 }}>{data.distributionManager.name}</div>
-              <div style={{ fontSize: 12, color: "var(--muted)" }}>📞 {data.distributionManager.mobile}</div>
-            </div>
-          </div>
-        </div>
-      )}
       {/* Area Manager */}
       {data.showAreaManager && data.areaManager?.name && (
         <div style={{ marginBottom: 32 }}>
@@ -562,6 +543,23 @@ function StaffPage({ data }) {
               <div style={{ fontSize: 10, color: "var(--blue)", fontWeight: 700, letterSpacing: 1, marginBottom: 3 }}>AREA MANAGER</div>
               <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 3 }}>{data.areaManager.name}</div>
               <div style={{ fontSize: 12, color: "var(--muted)" }}>📞 {data.areaManager.mobile}</div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Distribution Manager */}
+      {data.distributionManager?.name && (
+        <div style={{ marginBottom: 32 }}>
+          <div className="section-title" style={{ marginBottom: 16 }}>ডিস্ট্রিবিউশন ম্যানেজার</div>
+          <div className="card" style={{ padding: 20, display: "flex", alignItems: "center", gap: 16, maxWidth: 420, border: "1px solid rgba(232,160,32,0.3)" }}>
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <ImgWithFallback src={data.distributionManager.photo} alt="" style={{ width: 70, height: 70, borderRadius: "50%", objectFit: "cover", border: "3px solid var(--gold)" }} />
+              <div style={{ position: "absolute", bottom: -4, left: "50%", transform: "translateX(-50%)", background: "var(--gold)", color: "#0f1923", fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 10 }}>DM</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 10, color: "var(--gold)", fontWeight: 700, letterSpacing: 1, marginBottom: 3 }}>DISTRIBUTION MANAGER</div>
+              <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 3 }}>{data.distributionManager.name}</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>📞 {data.distributionManager.mobile}</div>
             </div>
           </div>
         </div>
