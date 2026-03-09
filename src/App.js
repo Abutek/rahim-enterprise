@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react"; // v20260309052910
+import { useState, useEffect, useRef, useCallback } from "react"; // v20260309053406
 
 // ===================== INITIAL DATA =====================
 const INITIAL_DATA = {
@@ -1178,15 +1178,6 @@ function ContentTab({ data, setData, isAdmin }) {
           <div><label>🗺️ কভারেজ এরিয়া</label><input value={dForm.coverage || ""} onChange={e => setDForm(f => ({ ...f, coverage: e.target.value }))} /></div>
           <div><label>📞 হেল্পলাইন</label><input value={dForm.helpline || ""} onChange={e => setDForm(f => ({ ...f, helpline: e.target.value }))} /></div>
           <div style={{ background: "var(--navy3)", borderRadius: 8, padding: "12px 14px" }}>
-            <div style={{ fontSize: 12, color: "var(--gold)", fontWeight: 700, marginBottom: 10 }}>🏢 ডিস্ট্রিবিউশন ম্যানেজার</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <div><label>নাম</label><input value={dForm.dmName || ""} onChange={e => setDForm(f => ({ ...f, dmName: e.target.value }))} /></div>
-              <div><label>মোবাইল</label><input value={dForm.dmMobile || ""} onChange={e => setDForm(f => ({ ...f, dmMobile: e.target.value }))} /></div>
-              <div><label>ঠিকানা</label><input value={dForm.dmAddress || ""} onChange={e => setDForm(f => ({ ...f, dmAddress: e.target.value }))} /></div>
-              <div><label>ছবি</label><ImageInputWithUpload value={dForm.dmPhoto || ""} onChange={v => setDForm(f => ({ ...f, dmPhoto: v }))} previewStyle={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--gold)" }} /></div>
-            </div>
-          </div>
-          <div style={{ background: "var(--navy3)", borderRadius: 8, padding: "12px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
               <div style={{ fontSize: 12, color: "var(--blue)", fontWeight: 700 }}>🗺️ এরিয়া ম্যানেজার</div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1201,6 +1192,15 @@ function ContentTab({ data, setData, isAdmin }) {
               <div><label>মোবাইল</label><input value={dForm.amMobile || ""} onChange={e => setDForm(f => ({ ...f, amMobile: e.target.value }))} /></div>
               <div><label>ঠিকানা</label><input value={dForm.amAddress || ""} onChange={e => setDForm(f => ({ ...f, amAddress: e.target.value }))} /></div>
               <div><label>ছবি</label><ImageInputWithUpload value={dForm.amPhoto || ""} onChange={v => setDForm(f => ({ ...f, amPhoto: v }))} previewStyle={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--blue)" }} /></div>
+            </div>
+          </div>
+          <div style={{ background: "var(--navy3)", borderRadius: 8, padding: "12px 14px" }}>
+            <div style={{ fontSize: 12, color: "var(--gold)", fontWeight: 700, marginBottom: 10 }}>🏢 ডিস্ট্রিবিউশন ম্যানেজার</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div><label>নাম</label><input value={dForm.dmName || ""} onChange={e => setDForm(f => ({ ...f, dmName: e.target.value }))} /></div>
+              <div><label>মোবাইল</label><input value={dForm.dmMobile || ""} onChange={e => setDForm(f => ({ ...f, dmMobile: e.target.value }))} /></div>
+              <div><label>ঠিকানা</label><input value={dForm.dmAddress || ""} onChange={e => setDForm(f => ({ ...f, dmAddress: e.target.value }))} /></div>
+              <div><label>ছবি</label><ImageInputWithUpload value={dForm.dmPhoto || ""} onChange={v => setDForm(f => ({ ...f, dmPhoto: v }))} previewStyle={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--gold)" }} /></div>
             </div>
           </div>
         </div>
