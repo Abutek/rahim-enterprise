@@ -394,25 +394,6 @@ function PublicHome({ data }) {
           </div>
         </div>
       </div>
-      {/* Distribution Manager Panel */}
-      <div className="public-section" style={{ background: "linear-gradient(135deg,#162032,#1a2a3e)", borderBottom: "1px solid var(--border)" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 20px" }}>
-          <div className="section-title" style={{ marginBottom: 20 }}>ডিস্ট্রিবিউশন ম্যানেজার</div>
-          <div className="card" style={{ padding: 24, display: "flex", alignItems: "center", gap: 20, maxWidth: 480, background: "linear-gradient(135deg,#1e2d42,#243550)", border: "1px solid rgba(232,160,32,0.3)" }}>
-            <div style={{ position: "relative", flexShrink: 0 }}>
-              <ImgWithFallback src={data.distributionManager?.photo} alt="" style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: "3px solid var(--gold)" }} />
-              <div style={{ position: "absolute", bottom: -4, left: "50%", transform: "translateX(-50%)", background: "var(--gold)", color: "#0f1923", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 10, whiteSpace: "nowrap" }}>DM</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 11, color: "var(--gold)", fontWeight: 600, marginBottom: 4, letterSpacing: 1 }}>DISTRIBUTION MANAGER</div>
-              <div style={{ fontFamily: "'Tiro Bangla', serif", fontSize: 20, color: "var(--text)", marginBottom: 4 }}>{data.distributionManager?.name}</div>
-              <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 2 }}>📍 {data.distributionManager?.address}</div>
-              <div style={{ fontSize: 13, color: "var(--muted)" }}>📞 {data.distributionManager?.mobile}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Area Manager Panel */}
       {data.showAreaManager && data.areaManager?.name && (
         <div className="public-section" style={{ background: "linear-gradient(135deg,#1a2535,#1e2d42)", borderBottom: "1px solid var(--border)" }}>
@@ -433,6 +414,25 @@ function PublicHome({ data }) {
           </div>
         </div>
       )}
+
+      {/* Distribution Manager Panel */}
+      <div className="public-section" style={{ background: "linear-gradient(135deg,#162032,#1a2a3e)", borderBottom: "1px solid var(--border)" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 20px" }}>
+          <div className="section-title" style={{ marginBottom: 20 }}>ডিস্ট্রিবিউশন ম্যানেজার</div>
+          <div className="card" style={{ padding: 24, display: "flex", alignItems: "center", gap: 20, maxWidth: 480, background: "linear-gradient(135deg,#1e2d42,#243550)", border: "1px solid rgba(232,160,32,0.3)" }}>
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <ImgWithFallback src={data.distributionManager?.photo} alt="" style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: "3px solid var(--gold)" }} />
+              <div style={{ position: "absolute", bottom: -4, left: "50%", transform: "translateX(-50%)", background: "var(--gold)", color: "#0f1923", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 10, whiteSpace: "nowrap" }}>DM</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: "var(--gold)", fontWeight: 600, marginBottom: 4, letterSpacing: 1 }}>DISTRIBUTION MANAGER</div>
+              <div style={{ fontFamily: "'Tiro Bangla', serif", fontSize: 20, color: "var(--text)", marginBottom: 4 }}>{data.distributionManager?.name}</div>
+              <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 2 }}>📍 {data.distributionManager?.address}</div>
+              <div style={{ fontSize: 13, color: "var(--muted)" }}>📞 {data.distributionManager?.mobile}</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Staff List */}
       <div className="public-section">
