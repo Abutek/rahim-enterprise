@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react"; // v20260310072621// ===================== INITIAL DATA =====================
+import { useState, useEffect, useRef, useCallback } from "react"; // v20260310091319// ===================== INITIAL DATA =====================
 const INITIAL_DATA = {
   notices: [
     { id: 1, text: "আগামী ১৫ই মার্চ অফিস বন্ধ থাকবে।", date: "2026-03-03" },
@@ -1399,7 +1399,8 @@ function ProductsPage({ data, onOrder }) {
 
   const submitOrder = () => {
     if (!form.name.trim() || !form.mobile.trim() || !form.address.trim()) { setErr("নাম, মোবাইল ও ঠিকানা দিতে হবে।"); return; }
-    onOrder({ id: Date.now(), productId: selected.id, productName: selected.name, ...form, originalPrice: selected.price * form.qty, discount: promoDiscount, totalPrice, status: "pending", time: new Date().toLocaleString("bn-BD") });
+    if (form.qty > selected.stock) { setErr(`স্টকে মাত্র ${selected.stock}টি আছে। এর বেশি অর্ডার দেওয়া যাবে না।`); return; }
+    onOrder({ id: Date.now(), productId: selected.id, productName: selected.name, ...form, originalPrice: selected.price * form.qty, discount: promoDiscount, totalPrice, status: "pending", assignedStaff: null, tracking: [{status: "অর্ডার গৃহীত", time: new Date().toLocaleString("bn-BD")}], time: new Date().toLocaleString("bn-BD") });
     setSubmitted(true);
   };
 
@@ -1427,7 +1428,7 @@ function ProductsPage({ data, onOrder }) {
           <div><label>আপনার নাম *</label><input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="নাম লিখুন" /></div>
           <div><label>মোবাইল নম্বর *</label><input value={form.mobile} onChange={e => setForm(f => ({ ...f, mobile: e.target.value }))} placeholder="01XXXXXXXXX" /></div>
           <div><label>ঠিকানা *</label><input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="ডেলিভারি ঠিকানা" /></div>
-          <div><label>পরিমাণ</label><input type="number" min="1" value={form.qty} onChange={e => setForm(f => ({ ...f, qty: Math.max(1, parseInt(e.target.value)||1) }))} /></div>
+          <div><label>পরিমাণ</label><input type="number" min="1" max={selected.stock} value={form.qty} onChange={e => setForm(f => ({ ...f, qty: Math.max(1, parseInt(e.target.value)||1) }))} />{form.qty > selected.stock && <div style={{ fontSize: 12, color: "var(--red)", marginTop: 4 }}>⚠️ স্টকে মাত্র {selected.stock}টি আছে!</div>}</div>
           <div>
             <label>প্রোমো কোড (ঐচ্ছিক)</label>
             <div style={{ display: "flex", gap: 8 }}>
@@ -1494,7 +1495,8 @@ function OrdersPage({ data, onOrder }) {
 
   const submit = () => {
     if (!form.name.trim() || !form.mobile.trim() || !form.address.trim() || !form.productId) { setErr("নাম, মোবাইল, ঠিকানা ও পণ্য নির্বাচন করতে হবে।"); return; }
-    onOrder({ id: Date.now(), productId: parseInt(form.productId), productName: selectedProduct?.name, name: form.name, mobile: form.mobile, address: form.address, qty: form.qty, note: form.note, promo: form.promo, originalPrice: (selectedProduct?.price || 0) * form.qty, discount: promoDiscount, totalPrice, status: "pending", time: new Date().toLocaleString("bn-BD") });
+    if (selectedProduct && form.qty > selectedProduct.stock) { setErr(`স্টকে মাত্র ${selectedProduct.stock}টি আছে। এর বেশি অর্ডার দেওয়া যাবে না।`); return; }
+    onOrder({ id: Date.now(), productId: parseInt(form.productId), productName: selectedProduct?.name, name: form.name, mobile: form.mobile, address: form.address, qty: form.qty, note: form.note, promo: form.promo, originalPrice: (selectedProduct?.price || 0) * form.qty, discount: promoDiscount, totalPrice, status: "pending", assignedStaff: null, tracking: [{status: "অর্ডার গৃহীত", time: new Date().toLocaleString("bn-BD")}], time: new Date().toLocaleString("bn-BD") });
     setSubmitted(true);
   };
 
@@ -1635,7 +1637,21 @@ function ProductsAdminTab({ data, setData, isAdmin }) {
   const togglePromo = (id) => setData(d => ({ ...d, promoCodes: (d.promoCodes||[]).map(p => p.id === id ? { ...p, active: !p.active } : p) }));
   const deletePromo = (id) => { if (window.confirm("প্রোমো কোড মুছে দেবেন?")) setData(d => ({ ...d, promoCodes: (d.promoCodes||[]).filter(p => p.id !== id) })); };
 
-  const updateOrderStatus = (id, status) => setData(d => ({ ...d, orders: (d.orders||[]).map(o => o.id === id ? { ...o, status } : o) }));
+  const [assignModal, setAssignModal] = useState(null);
+  const [selectedStaffId, setSelectedStaffId] = useState("");
+  const [trackingNote, setTrackingNote] = useState("");
+
+  const updateOrderStatus = (id, status) => {
+    const statusMap = { confirmed: "অর্ডার কনফার্ম হয়েছে", delivered: "ডেলিভারি সম্পন্ন", cancelled: "অর্ডার বাতিল" };
+    setData(d => ({ ...d, orders: (d.orders||[]).map(o => o.id === id ? { ...o, status, tracking: [...(o.tracking||[]), {status: statusMap[status], time: new Date().toLocaleString("bn-BD")}] } : o) }));
+  };
+
+  const assignStaff = (orderId) => {
+    const staff = (data.staff||[]).find(s => s.id === parseInt(selectedStaffId));
+    if (!staff) return;
+    setData(d => ({ ...d, orders: (d.orders||[]).map(o => o.id === orderId ? { ...o, assignedStaff: { id: staff.id, name: staff.name, mobile: staff.mobile, area: staff.area }, tracking: [...(o.tracking||[]), {status: trackingNote || `${staff.name} এর মাধ্যমে ডেলিভারি শুরু`, time: new Date().toLocaleString("bn-BD")}] } : o) }));
+    setAssignModal(null); setSelectedStaffId(""); setTrackingNote("");
+  };
   const deleteOrder = (id) => { if (window.confirm("অর্ডার মুছে দেবেন?")) setData(d => ({ ...d, orders: (d.orders||[]).filter(o => o.id !== id) })); };
 
   const filteredOrders = (data.orders||[]).filter(o => orderFilter === "all" || o.status === orderFilter).sort((a,b) => b.id - a.id);
@@ -1727,6 +1743,18 @@ function ProductsAdminTab({ data, setData, isAdmin }) {
                     {o.address && <div style={{ fontSize: 12, color: "var(--muted)" }}>📍 {o.address}</div>}
                     {o.note && <div style={{ fontSize: 12, color: "var(--muted)" }}>📝 {o.note}</div>}
                     <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>🕐 {o.time}</div>
+                    {o.assignedStaff && <div style={{ marginTop: 6, padding: "8px 10px", background: "rgba(42,125,225,0.08)", border: "1px solid rgba(42,125,225,0.2)", borderRadius: 6 }}>
+                      <div style={{ fontSize: 11, color: "var(--blue)", fontWeight: 700, marginBottom: 2 }}>📦 ডেলিভারি কর্মী</div>
+                      <div style={{ fontSize: 12 }}>👤 {o.assignedStaff.name} | 📞 {o.assignedStaff.mobile}</div>
+                      <div style={{ fontSize: 11, color: "var(--muted)" }}>📍 এরিয়া: {o.assignedStaff.area}</div>
+                    </div>}
+                    {o.tracking && o.tracking.length > 0 && <div style={{ marginTop: 6 }}>
+                      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 4 }}>📍 ট্র্যাকিং:</div>
+                      {o.tracking.map((t, i) => <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 3 }}>
+                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: i === o.tracking.length-1 ? "var(--green)" : "var(--border)", marginTop: 5, flexShrink: 0 }} />
+                        <div><div style={{ fontSize: 12 }}>{t.status}</div><div style={{ fontSize: 10, color: "var(--muted)" }}>{t.time}</div></div>
+                      </div>)}
+                    </div>}
                     <div style={{ marginTop: 6 }}>
                       {o.discount > 0 && <span style={{ fontSize: 12, color: "var(--muted)", textDecoration: "line-through", marginRight: 8 }}>৳{o.originalPrice}</span>}
                       <span style={{ fontWeight: 700, color: "var(--green)" }}>৳{o.totalPrice}</span>
@@ -1739,6 +1767,7 @@ function ProductsAdminTab({ data, setData, isAdmin }) {
                       {o.status !== "confirmed" && <button className="btn" style={{ fontSize: 10, padding: "3px 8px", background: "rgba(42,125,225,0.15)", color: "var(--blue)", border: "1px solid var(--blue)" }} onClick={() => updateOrderStatus(o.id, "confirmed")}>কনফার্ম</button>}
                       {o.status !== "delivered" && <button className="btn" style={{ fontSize: 10, padding: "3px 8px", background: "rgba(39,174,96,0.15)", color: "var(--green)", border: "1px solid var(--green)" }} onClick={() => updateOrderStatus(o.id, "delivered")}>ডেলিভারি</button>}
                       {o.status !== "cancelled" && <button className="btn" style={{ fontSize: 10, padding: "3px 8px", background: "rgba(232,64,64,0.15)", color: "var(--red)", border: "1px solid var(--red)" }} onClick={() => updateOrderStatus(o.id, "cancelled")}>বাতিল</button>}
+                      <button className="btn" style={{ fontSize: 10, padding: "3px 8px", background: "rgba(232,160,32,0.15)", color: "var(--gold)", border: "1px solid var(--gold)" }} onClick={() => setAssignModal(o.id)}>ট্র্যাক</button>
                       <button className="btn" style={{ fontSize: 10, padding: "3px 8px", background: "rgba(232,64,64,0.15)", color: "var(--red)", border: "1px solid var(--red)" }} onClick={() => deleteOrder(o.id)}>মুছুন</button>
                     </div>}
                   </div>
@@ -1765,6 +1794,47 @@ function ProductsAdminTab({ data, setData, isAdmin }) {
               <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => setModal(null)}>বাতিল</button>
               <button className="btn btn-gold" style={{ flex: 1 }} onClick={saveProduct}>সেভ করুন</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Staff / Tracking Modal */}
+      {assignModal && (
+        <div className="modal-overlay" onClick={() => setAssignModal(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
+            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 20, color: "var(--gold)" }}>📦 ডেলিভারি ট্র্যাকিং</div>
+            {(() => { const o = (data.orders||[]).find(x => x.id === assignModal); return o ? (
+              <div>
+                <div style={{ background: "var(--navy3)", borderRadius: 8, padding: "10px 14px", marginBottom: 16 }}>
+                  <div style={{ fontWeight: 600 }}>{o.productName} × {o.qty}</div>
+                  <div style={{ fontSize: 13, color: "var(--muted)" }}>👤 {o.name} | 📍 {o.address}</div>
+                </div>
+                <div style={{ marginBottom: 14 }}>
+                  <label>কর্মচারী নির্বাচন করুন</label>
+                  <select value={selectedStaffId} onChange={e => setSelectedStaffId(e.target.value)} style={{ width: "100%", background: "var(--navy3)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", color: "var(--text)", fontSize: 14, marginTop: 6 }}>
+                    <option value="">-- কর্মচারী বেছে নিন --</option>
+                    {(data.staff||[]).map(s => <option key={s.id} value={s.id}>{s.name} — {s.area}</option>)}
+                  </select>
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                  <label>ট্র্যাকিং নোট (ঐচ্ছিক)</label>
+                  <input value={trackingNote} onChange={e => setTrackingNote(e.target.value)} placeholder="যেমন: হ্নীলা পর্যন্ত পৌঁছেছে" style={{ marginTop: 6 }} />
+                </div>
+                {o.tracking && o.tracking.length > 0 && (
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 8 }}>📍 ট্র্যাকিং ইতিহাস:</div>
+                    {o.tracking.map((t, i) => <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: i === o.tracking.length-1 ? "var(--green)" : "var(--muted)", marginTop: 5, flexShrink: 0 }} />
+                      <div><div style={{ fontSize: 13 }}>{t.status}</div><div style={{ fontSize: 11, color: "var(--muted)" }}>{t.time}</div></div>
+                    </div>)}
+                  </div>
+                )}
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => setAssignModal(null)}>বন্ধ করুন</button>
+                  <button className="btn btn-gold" style={{ flex: 1 }} onClick={() => assignStaff(assignModal)} disabled={!selectedStaffId}>কর্মী নিয়োগ করুন</button>
+                </div>
+              </div>
+            ) : null; })()}
           </div>
         </div>
       )}
