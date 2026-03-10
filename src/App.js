@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react"; // v20260309053901// ===================== INITIAL DATA =====================
+import { useState, useEffect, useRef, useCallback } from "react"; // v20260310072621// ===================== INITIAL DATA =====================
 const INITIAL_DATA = {
   notices: [
     { id: 1, text: "আগামী ১৫ই মার্চ অফিস বন্ধ থাকবে।", date: "2026-03-03" },
@@ -55,6 +55,16 @@ const INITIAL_DATA = {
     { id: 1, title: "রমজান স্পেশাল অফার", desc: "১০০ টাকা রিচার্জে ৫ GB ডেটা ফ্রি", img: "https://picsum.photos/seed/offer1/300/180" },
   ],
   customTabs: [],
+  products: [
+    { id: 1, name: "বাংলালিংক সিম", price: 100, stock: 50, img: "https://picsum.photos/seed/sim/300/200", desc: "নতুন বাংলালিংক সিম কার্ড" },
+    { id: 2, name: "ডেটা প্যাক ১GB", price: 49, stock: 100, img: "https://picsum.photos/seed/data/300/200", desc: "৭ দিনের জন্য ১GB ডেটা" },
+  ],
+  promoCodes: [
+    { id: 1, code: "RAHIM10", discount: 10, type: "percent", active: true },
+    { id: 2, code: "FLAT20", discount: 20, type: "flat", active: true },
+  ],
+  orders: [],
+  complaints: [],
 };
 
 const DEFAULT_USERS = { admin: "admin123", readonly: "view123" };
@@ -336,7 +346,7 @@ function Header({ onLoginClick, role, onLogout, activePage, setActivePage, logo,
           </div>
         </div>
         <nav style={{ display: "flex", gap: 4, alignItems: "center", flexWrap: "wrap" }}>
-          {[["home", "হোম"], ["staff", "কর্মচারী"], ["events", "ইভেন্ট"], ["attendance", "হাজিরা"]].map(([k, v]) => (
+          {[["home", "হোম"], ["staff", "কর্মচারী"], ["events", "ইভেন্ট"], ["products", "পণ্য"], ["orders", "অর্ডার"], ["complaints", "কমপ্লেইন"], ["attendance", "হাজিরা"]].map(([k, v]) => (
             <a key={k} className={activePage === k ? "active" : ""} onClick={() => setActivePage(k)}>{v}</a>
           ))}
           {role === null ? (
@@ -610,6 +620,8 @@ function Dashboard({ data, setData, role, onChangePassword }) {
     { key: "staff", label: "কর্মচারী" },
     { key: "accounting", label: "দৈনিক হিসাব" },
     { key: "content", label: "কন্টেন্ট" },
+    { key: "products_admin", label: "পণ্য ও অর্ডার" },
+    { key: "complaints_admin", label: "কমপ্লেইন" },
   ];
   const allTabs = [...builtinTabs, ...(data.customTabs || []).map(ct => ({ key: `custom_${ct.id}`, label: ct.label, custom: true, tabData: ct }))];
   const deleteCustomTab = (tabKey, tabLabel) => {
@@ -659,6 +671,8 @@ function Dashboard({ data, setData, role, onChangePassword }) {
       {activeTab === "staff" && <StaffTab data={data} setData={setData} isAdmin={isAdmin} />}
       {activeTab === "accounting" && <AccountingTab data={data} setData={setData} isAdmin={isAdmin} />}
       {activeTab === "content" && <ContentTab data={data} setData={setData} isAdmin={isAdmin} />}
+      {activeTab === "products_admin" && <ProductsAdminTab data={data} setData={setData} isAdmin={isAdmin} />}
+      {activeTab === "complaints_admin" && <ComplaintsAdminTab data={data} setData={setData} isAdmin={isAdmin} />}
       {(data.customTabs || []).map(ct => activeTab === `custom_${ct.id}` && (
         <CustomTabView key={ct.id} tabData={ct} data={data} setData={setData} isAdmin={isAdmin} />
       ))}
@@ -1363,6 +1377,477 @@ function LoginModal({ onClose, onLogin, users }) {
   );
 }
 
+
+// ===================== PRODUCTS PAGE (Public) =====================
+function ProductsPage({ data, onOrder }) {
+  const [selected, setSelected] = useState(null);
+  const [form, setForm] = useState({ name: "", mobile: "", address: "", qty: 1, promo: "" });
+  const [promoMsg, setPromoMsg] = useState("");
+  const [promoDiscount, setPromoDiscount] = useState(0);
+  const [submitted, setSubmitted] = useState(false);
+  const [err, setErr] = useState("");
+
+  const applyPromo = () => {
+    const code = (data.promoCodes || []).find(p => p.code === form.promo.trim().toUpperCase() && p.active);
+    if (!code) { setPromoMsg("❌ অকার্যকর প্রোমো কোড"); setPromoDiscount(0); return; }
+    const disc = code.type === "percent" ? Math.round(selected.price * form.qty * code.discount / 100) : code.discount;
+    setPromoDiscount(disc);
+    setPromoMsg(`✅ ${code.discount}${code.type === "percent" ? "%" : " টাকা"} ছাড় প্রযোজ্য!`);
+  };
+
+  const totalPrice = selected ? Math.max(0, selected.price * form.qty - promoDiscount) : 0;
+
+  const submitOrder = () => {
+    if (!form.name.trim() || !form.mobile.trim() || !form.address.trim()) { setErr("নাম, মোবাইল ও ঠিকানা দিতে হবে।"); return; }
+    onOrder({ id: Date.now(), productId: selected.id, productName: selected.name, ...form, originalPrice: selected.price * form.qty, discount: promoDiscount, totalPrice, status: "pending", time: new Date().toLocaleString("bn-BD") });
+    setSubmitted(true);
+  };
+
+  if (submitted) return (
+    <div style={{ maxWidth: 500, margin: "80px auto", padding: "0 20px", textAlign: "center" }}>
+      <div className="card" style={{ padding: 40 }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
+        <div style={{ fontFamily: "'Tiro Bangla', serif", fontSize: 22, color: "var(--green)", marginBottom: 8 }}>অর্ডার সফলভাবে দেওয়া হয়েছে!</div>
+        <div style={{ color: "var(--muted)", fontSize: 14, marginBottom: 20 }}>অ্যাডমিন শীঘ্রই আপনার সাথে যোগাযোগ করবেন।</div>
+        <button className="btn btn-gold" onClick={() => { setSubmitted(false); setSelected(null); setForm({ name: "", mobile: "", address: "", qty: 1, promo: "" }); setPromoDiscount(0); setPromoMsg(""); }}>আরেকটি অর্ডার দিন</button>
+      </div>
+    </div>
+  );
+
+  if (selected) return (
+    <div style={{ maxWidth: 520, margin: "40px auto", padding: "0 20px" }}>
+      <button className="btn btn-ghost" style={{ marginBottom: 16, fontSize: 13 }} onClick={() => { setSelected(null); setPromoDiscount(0); setPromoMsg(""); setErr(""); }}>← ফিরে যান</button>
+      <div className="card" style={{ padding: 28 }}>
+        <ImgWithFallback src={selected.img} alt={selected.name} style={{ width: "100%", height: 180, objectFit: "cover", borderRadius: 8, marginBottom: 16 }} />
+        <div style={{ fontFamily: "'Tiro Bangla', serif", fontSize: 22, color: "var(--gold)", marginBottom: 4 }}>{selected.name}</div>
+        <div style={{ color: "var(--muted)", fontSize: 14, marginBottom: 12 }}>{selected.desc}</div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: "var(--green)", marginBottom: 20 }}>মূল্য: ৳{selected.price}</div>
+        {err && <div style={{ background: "rgba(232,64,64,0.1)", border: "1px solid var(--red)", borderRadius: 8, padding: "10px 14px", color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{err}</div>}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div><label>আপনার নাম *</label><input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="নাম লিখুন" /></div>
+          <div><label>মোবাইল নম্বর *</label><input value={form.mobile} onChange={e => setForm(f => ({ ...f, mobile: e.target.value }))} placeholder="01XXXXXXXXX" /></div>
+          <div><label>ঠিকানা *</label><input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="ডেলিভারি ঠিকানা" /></div>
+          <div><label>পরিমাণ</label><input type="number" min="1" value={form.qty} onChange={e => setForm(f => ({ ...f, qty: Math.max(1, parseInt(e.target.value)||1) }))} /></div>
+          <div>
+            <label>প্রোমো কোড (ঐচ্ছিক)</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input value={form.promo} onChange={e => setForm(f => ({ ...f, promo: e.target.value }))} placeholder="PROMO CODE" style={{ flex: 1 }} />
+              <button className="btn btn-ghost" style={{ padding: "0 14px", fontSize: 13 }} onClick={applyPromo}>প্রয়োগ</button>
+            </div>
+            {promoMsg && <div style={{ fontSize: 12, marginTop: 4, color: promoDiscount > 0 ? "var(--green)" : "var(--red)" }}>{promoMsg}</div>}
+          </div>
+          <div style={{ background: "var(--navy3)", borderRadius: 8, padding: "12px 16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--muted)", marginBottom: 4 }}><span>মূল মূল্য</span><span>৳{selected.price * form.qty}</span></div>
+            {promoDiscount > 0 && <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--green)", marginBottom: 4 }}><span>ছাড়</span><span>-৳{promoDiscount}</span></div>}
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 16, fontWeight: 700, color: "var(--gold)", borderTop: "1px solid var(--border)", paddingTop: 8 }}><span>মোট</span><span>৳{totalPrice}</span></div>
+          </div>
+          <button className="btn btn-gold" style={{ width: "100%", padding: 14, fontSize: 16 }} onClick={submitOrder}>অর্ডার নিশ্চিত করুন</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 20px" }}>
+      <div className="section-title" style={{ marginBottom: 24 }}>পণ্য তালিকা</div>
+      {(!data.products || data.products.length === 0) && <div style={{ color: "var(--muted)", textAlign: "center", padding: 40 }}>কোনো পণ্য নেই।</div>}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 20 }}>
+        {(data.products || []).map(p => (
+          <div key={p.id} className="card animate-in" style={{ overflow: "hidden", cursor: "pointer" }} onClick={() => { setSelected(p); setErr(""); }}>
+            <ImgWithFallback src={p.img} alt={p.name} style={{ width: "100%", height: 180, objectFit: "cover" }} />
+            <div style={{ padding: 16 }}>
+              <div style={{ fontWeight: 700, fontSize: 16, color: "var(--gold)", marginBottom: 6 }}>{p.name}</div>
+              <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 10 }}>{p.desc}</div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "var(--green)" }}>৳{p.price}</div>
+                <div style={{ fontSize: 12, color: "var(--muted)" }}>স্টক: {p.stock}</div>
+              </div>
+              <button className="btn btn-gold" style={{ width: "100%", marginTop: 12, padding: "8px 0" }} onClick={e => { e.stopPropagation(); setSelected(p); setErr(""); }}>অর্ডার করুন</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ===================== ORDERS PAGE (Public Manual Order) =====================
+function OrdersPage({ data, onOrder }) {
+  const [form, setForm] = useState({ name: "", mobile: "", address: "", productId: "", qty: 1, promo: "", note: "" });
+  const [promoMsg, setPromoMsg] = useState("");
+  const [promoDiscount, setPromoDiscount] = useState(0);
+  const [submitted, setSubmitted] = useState(false);
+  const [err, setErr] = useState("");
+
+  const selectedProduct = (data.products || []).find(p => p.id === parseInt(form.productId));
+
+  const applyPromo = () => {
+    if (!selectedProduct) return;
+    const code = (data.promoCodes || []).find(p => p.code === form.promo.trim().toUpperCase() && p.active);
+    if (!code) { setPromoMsg("❌ অকার্যকর প্রোমো কোড"); setPromoDiscount(0); return; }
+    const disc = code.type === "percent" ? Math.round(selectedProduct.price * form.qty * code.discount / 100) : code.discount;
+    setPromoDiscount(disc);
+    setPromoMsg(`✅ ${code.discount}${code.type === "percent" ? "%" : " টাকা"} ছাড়!`);
+  };
+
+  const totalPrice = selectedProduct ? Math.max(0, selectedProduct.price * form.qty - promoDiscount) : 0;
+
+  const submit = () => {
+    if (!form.name.trim() || !form.mobile.trim() || !form.address.trim() || !form.productId) { setErr("নাম, মোবাইল, ঠিকানা ও পণ্য নির্বাচন করতে হবে।"); return; }
+    onOrder({ id: Date.now(), productId: parseInt(form.productId), productName: selectedProduct?.name, name: form.name, mobile: form.mobile, address: form.address, qty: form.qty, note: form.note, promo: form.promo, originalPrice: (selectedProduct?.price || 0) * form.qty, discount: promoDiscount, totalPrice, status: "pending", time: new Date().toLocaleString("bn-BD") });
+    setSubmitted(true);
+  };
+
+  if (submitted) return (
+    <div style={{ maxWidth: 500, margin: "80px auto", padding: "0 20px", textAlign: "center" }}>
+      <div className="card" style={{ padding: 40 }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
+        <div style={{ fontFamily: "'Tiro Bangla', serif", fontSize: 22, color: "var(--green)", marginBottom: 8 }}>অর্ডার সফলভাবে দেওয়া হয়েছে!</div>
+        <div style={{ color: "var(--muted)", fontSize: 14, marginBottom: 20 }}>অ্যাডমিন শীঘ্রই যোগাযোগ করবেন।</div>
+        <button className="btn btn-gold" onClick={() => { setSubmitted(false); setForm({ name: "", mobile: "", address: "", productId: "", qty: 1, promo: "", note: "" }); setPromoDiscount(0); setPromoMsg(""); setErr(""); }}>আরেকটি অর্ডার</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ maxWidth: 560, margin: "40px auto", padding: "0 20px" }}>
+      <div className="section-title" style={{ marginBottom: 24 }}>অর্ডার ফর্ম</div>
+      <div className="card" style={{ padding: 28 }}>
+        {err && <div style={{ background: "rgba(232,64,64,0.1)", border: "1px solid var(--red)", borderRadius: 8, padding: "10px 14px", color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{err}</div>}
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div><label>পণ্য নির্বাচন *</label>
+            <select value={form.productId} onChange={e => { setForm(f => ({ ...f, productId: e.target.value })); setPromoDiscount(0); setPromoMsg(""); }} style={{ width: "100%", background: "var(--navy3)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", color: "var(--text)", fontSize: 14 }}>
+              <option value="">-- পণ্য বেছে নিন --</option>
+              {(data.products || []).map(p => <option key={p.id} value={p.id}>{p.name} — ৳{p.price}</option>)}
+            </select>
+          </div>
+          <div><label>আপনার নাম *</label><input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="নাম লিখুন" /></div>
+          <div><label>মোবাইল নম্বর *</label><input value={form.mobile} onChange={e => setForm(f => ({ ...f, mobile: e.target.value }))} placeholder="01XXXXXXXXX" /></div>
+          <div><label>ঠিকানা</label><input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="ডেলিভারি ঠিকানা" /></div>
+          <div><label>পরিমাণ</label><input type="number" min="1" value={form.qty} onChange={e => setForm(f => ({ ...f, qty: Math.max(1, parseInt(e.target.value)||1) }))} /></div>
+          <div>
+            <label>প্রোমো কোড (ঐচ্ছিক)</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input value={form.promo} onChange={e => setForm(f => ({ ...f, promo: e.target.value }))} placeholder="PROMO CODE" style={{ flex: 1 }} />
+              <button className="btn btn-ghost" style={{ padding: "0 14px", fontSize: 13 }} onClick={applyPromo}>প্রয়োগ</button>
+            </div>
+            {promoMsg && <div style={{ fontSize: 12, marginTop: 4, color: promoDiscount > 0 ? "var(--green)" : "var(--red)" }}>{promoMsg}</div>}
+          </div>
+          <div><label>বিশেষ নোট</label><input value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))} placeholder="কোনো বিশেষ নির্দেশনা থাকলে লিখুন" /></div>
+          {selectedProduct && (
+            <div style={{ background: "var(--navy3)", borderRadius: 8, padding: "12px 16px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--muted)", marginBottom: 4 }}><span>মূল মূল্য</span><span>৳{selectedProduct.price * form.qty}</span></div>
+              {promoDiscount > 0 && <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--green)", marginBottom: 4 }}><span>ছাড়</span><span>-৳{promoDiscount}</span></div>}
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 16, fontWeight: 700, color: "var(--gold)", borderTop: "1px solid var(--border)", paddingTop: 8 }}><span>মোট</span><span>৳{totalPrice}</span></div>
+            </div>
+          )}
+          <button className="btn btn-gold" style={{ width: "100%", padding: 14, fontSize: 16 }} onClick={submit}>অর্ডার দিন</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ===================== COMPLAINTS PAGE (Public) =====================
+function ComplaintsPage({ data, onSubmit }) {
+  const [form, setForm] = useState({ name: "", mobile: "", type: "product", subject: "", message: "" });
+  const [submitted, setSubmitted] = useState(false);
+  const [err, setErr] = useState("");
+
+  const submit = () => {
+    if (!form.message.trim()) { setErr("বিষয়বস্তু লিখতে হবে।"); return; }
+    onSubmit({ id: Date.now(), ...form, name: form.name.trim() || "Anonymous", status: "new", time: new Date().toLocaleString("bn-BD") });
+    setSubmitted(true);
+  };
+
+  if (submitted) return (
+    <div style={{ maxWidth: 500, margin: "80px auto", padding: "0 20px", textAlign: "center" }}>
+      <div className="card" style={{ padding: 40 }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>📩</div>
+        <div style={{ fontFamily: "'Tiro Bangla', serif", fontSize: 22, color: "var(--green)", marginBottom: 8 }}>সফলভাবে জমা হয়েছে!</div>
+        <div style={{ color: "var(--muted)", fontSize: 14, marginBottom: 20 }}>আপনার কমপ্লেইন/মতামত আমরা পর্যালোচনা করব।</div>
+        <button className="btn btn-gold" onClick={() => { setSubmitted(false); setForm({ name: "", mobile: "", type: "product", subject: "", message: "" }); setErr(""); }}>আরেকটি জমা দিন</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ maxWidth: 560, margin: "40px auto", padding: "0 20px" }}>
+      <div className="section-title" style={{ marginBottom: 24 }}>কমপ্লেইন ও মতামত</div>
+      <div className="card" style={{ padding: 28 }}>
+        {err && <div style={{ background: "rgba(232,64,64,0.1)", border: "1px solid var(--red)", borderRadius: 8, padding: "10px 14px", color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{err}</div>}
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div><label>আপনার নাম (ঐচ্ছিক)</label><input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="পরিচয় গোপন রাখতে খালি রাখুন" /></div>
+          <div><label>মোবাইল (ঐচ্ছিক)</label><input value={form.mobile} onChange={e => setForm(f => ({ ...f, mobile: e.target.value }))} placeholder="01XXXXXXXXX" /></div>
+          <div><label>ধরন</label>
+            <div style={{ display: "flex", gap: 10, marginTop: 6 }}>
+              {[["product", "🛍️ পণ্য বিষয়ক"], ["staff", "👤 কর্মচারী বিষয়ক"], ["other", "💬 অন্যান্য"]].map(([val, label]) => (
+                <div key={val} onClick={() => setForm(f => ({ ...f, type: val }))} style={{ flex: 1, padding: "10px 8px", borderRadius: 8, border: `1px solid ${form.type === val ? "var(--gold)" : "var(--border)"}`, background: form.type === val ? "rgba(232,160,32,0.1)" : "var(--navy3)", cursor: "pointer", textAlign: "center", fontSize: 12, color: form.type === val ? "var(--gold)" : "var(--muted)" }}>{label}</div>
+              ))}
+            </div>
+          </div>
+          {form.type === "staff" && (
+            <div><label>কর্মচারী</label>
+              <select value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))} style={{ width: "100%", background: "var(--navy3)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", color: "var(--text)", fontSize: 14 }}>
+                <option value="">-- কর্মচারী বেছে নিন --</option>
+                {(data.staff || []).map(s => <option key={s.id} value={s.name}>{s.name} ({s.code})</option>)}
+              </select>
+            </div>
+          )}
+          {form.type === "product" && (
+            <div><label>পণ্য</label>
+              <select value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))} style={{ width: "100%", background: "var(--navy3)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", color: "var(--text)", fontSize: 14 }}>
+                <option value="">-- পণ্য বেছে নিন --</option>
+                {(data.products || []).map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+              </select>
+            </div>
+          )}
+          <div><label>বিস্তারিত *</label><textarea value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} placeholder="আপনার কমপ্লেইন বা মতামত লিখুন..." rows={4} style={{ width: "100%", boxSizing: "border-box", background: "var(--navy3)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", color: "var(--text)", fontSize: 14, resize: "vertical" }} /></div>
+          <button className="btn btn-gold" style={{ width: "100%", padding: 14, fontSize: 16 }} onClick={submit}>জমা দিন</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ===================== PRODUCTS ADMIN TAB =====================
+function ProductsAdminTab({ data, setData, isAdmin }) {
+  const [tab, setTab] = useState("products");
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({});
+  const [promoForm, setPromoForm] = useState({});
+  const [orderFilter, setOrderFilter] = useState("all");
+
+  const openAddProduct = () => { setForm({ name: "", price: "", stock: "", img: "", desc: "" }); setModal("addProduct"); };
+  const openEditProduct = (p) => { setForm({ ...p }); setModal("editProduct"); };
+  const saveProduct = () => {
+    if (modal === "addProduct") setData(d => ({ ...d, products: [...(d.products||[]), { ...form, id: Date.now(), price: parseInt(form.price)||0, stock: parseInt(form.stock)||0 }] }));
+    else setData(d => ({ ...d, products: (d.products||[]).map(p => p.id === form.id ? { ...form, price: parseInt(form.price)||0, stock: parseInt(form.stock)||0 } : p) }));
+    setModal(null);
+  };
+  const deleteProduct = (id) => { if (window.confirm("পণ্যটি মুছে দেবেন?")) setData(d => ({ ...d, products: (d.products||[]).filter(p => p.id !== id) })); };
+
+  const savePromo = () => {
+    if (modal === "addPromo") setData(d => ({ ...d, promoCodes: [...(d.promoCodes||[]), { ...promoForm, id: Date.now(), discount: parseInt(promoForm.discount)||0, active: true }] }));
+    else setData(d => ({ ...d, promoCodes: (d.promoCodes||[]).map(p => p.id === promoForm.id ? { ...promoForm, discount: parseInt(promoForm.discount)||0 } : p) }));
+    setModal(null);
+  };
+  const togglePromo = (id) => setData(d => ({ ...d, promoCodes: (d.promoCodes||[]).map(p => p.id === id ? { ...p, active: !p.active } : p) }));
+  const deletePromo = (id) => { if (window.confirm("প্রোমো কোড মুছে দেবেন?")) setData(d => ({ ...d, promoCodes: (d.promoCodes||[]).filter(p => p.id !== id) })); };
+
+  const updateOrderStatus = (id, status) => setData(d => ({ ...d, orders: (d.orders||[]).map(o => o.id === id ? { ...o, status } : o) }));
+  const deleteOrder = (id) => { if (window.confirm("অর্ডার মুছে দেবেন?")) setData(d => ({ ...d, orders: (d.orders||[]).filter(o => o.id !== id) })); };
+
+  const filteredOrders = (data.orders||[]).filter(o => orderFilter === "all" || o.status === orderFilter).sort((a,b) => b.id - a.id);
+  const statusColor = { pending: "var(--gold)", confirmed: "var(--blue)", delivered: "var(--green)", cancelled: "var(--red)" };
+  const statusLabel = { pending: "পেন্ডিং", confirmed: "কনফার্ম", delivered: "ডেলিভারি", cancelled: "বাতিল" };
+
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+        {[["products","🛍️ পণ্য"], ["promos","🏷️ প্রোমো কোড"], ["orders","📦 অর্ডার"]].map(([k,l]) => (
+          <button key={k} className={`btn ${tab===k?"btn-gold":"btn-ghost"}`} style={{ fontSize: 13 }} onClick={() => setTab(k)}>{l}</button>
+        ))}
+      </div>
+
+      {/* Products */}
+      {tab === "products" && (
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <div style={{ fontWeight: 700 }}>পণ্য তালিকা ({(data.products||[]).length}টি)</div>
+            {isAdmin && <button className="btn btn-gold" style={{ fontSize: 13 }} onClick={openAddProduct}>+ নতুন পণ্য</button>}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
+            {(data.products||[]).map(p => (
+              <div key={p.id} className="card" style={{ overflow: "hidden" }}>
+                <ImgWithFallback src={p.img} alt={p.name} style={{ width: "100%", height: 150, objectFit: "cover" }} />
+                <div style={{ padding: 14 }}>
+                  <div style={{ fontWeight: 700, color: "var(--gold)", marginBottom: 4 }}>{p.name}</div>
+                  <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 6 }}>{p.desc}</div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+                    <span style={{ color: "var(--green)", fontWeight: 700 }}>৳{p.price}</span>
+                    <span style={{ color: "var(--muted)", fontSize: 12 }}>স্টক: {p.stock}</span>
+                  </div>
+                  {isAdmin && <div style={{ display: "flex", gap: 8 }}>
+                    <button className="btn btn-ghost" style={{ flex: 1, fontSize: 12 }} onClick={() => openEditProduct(p)}>সম্পাদনা</button>
+                    <button className="btn" style={{ flex: 1, fontSize: 12, background: "rgba(232,64,64,0.15)", color: "var(--red)", border: "1px solid var(--red)" }} onClick={() => deleteProduct(p.id)}>মুছুন</button>
+                  </div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Promo Codes */}
+      {tab === "promos" && (
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <div style={{ fontWeight: 700 }}>প্রোমো কোড ({(data.promoCodes||[]).length}টি)</div>
+            {isAdmin && <button className="btn btn-gold" style={{ fontSize: 13 }} onClick={() => { setPromoForm({ code: "", discount: "", type: "percent" }); setModal("addPromo"); }}>+ নতুন কোড</button>}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {(data.promoCodes||[]).map(p => (
+              <div key={p.id} className="card" style={{ padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ background: "rgba(232,160,32,0.1)", border: "1px solid rgba(232,160,32,0.3)", borderRadius: 8, padding: "6px 14px", fontFamily: "monospace", fontWeight: 700, color: "var(--gold)", fontSize: 15 }}>{p.code}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13 }}>{p.discount}{p.type === "percent" ? "%" : " টাকা"} ছাড়</div>
+                  <div style={{ fontSize: 11, color: p.active ? "var(--green)" : "var(--red)" }}>{p.active ? "✅ সক্রিয়" : "❌ নিষ্ক্রিয়"}</div>
+                </div>
+                {isAdmin && <div style={{ display: "flex", gap: 6 }}>
+                  <button className="btn btn-ghost" style={{ fontSize: 11, padding: "4px 10px" }} onClick={() => togglePromo(p.id)}>{p.active ? "বন্ধ" : "চালু"}</button>
+                  <button className="btn btn-ghost" style={{ fontSize: 11, padding: "4px 10px" }} onClick={() => { setPromoForm({...p}); setModal("editPromo"); }}>এডিট</button>
+                  <button className="btn" style={{ fontSize: 11, padding: "4px 10px", background: "rgba(232,64,64,0.15)", color: "var(--red)", border: "1px solid var(--red)" }} onClick={() => deletePromo(p.id)}>মুছুন</button>
+                </div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Orders */}
+      {tab === "orders" && (
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
+            <div style={{ fontWeight: 700 }}>অর্ডার ({(data.orders||[]).length}টি)</div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {[["all","সব"], ["pending","পেন্ডিং"], ["confirmed","কনফার্ম"], ["delivered","ডেলিভারি"], ["cancelled","বাতিল"]].map(([k,l]) => (
+                <button key={k} className={`btn ${orderFilter===k?"btn-gold":"btn-ghost"}`} style={{ fontSize: 11, padding: "4px 10px" }} onClick={() => setOrderFilter(k)}>{l}</button>
+              ))}
+            </div>
+          </div>
+          {filteredOrders.length === 0 && <div style={{ color: "var(--muted)", textAlign: "center", padding: 40 }}>কোনো অর্ডার নেই।</div>}
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {filteredOrders.map(o => (
+              <div key={o.id} className="card" style={{ padding: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
+                  <div>
+                    <div style={{ fontWeight: 700, marginBottom: 4 }}>{o.productName} × {o.qty}</div>
+                    <div style={{ fontSize: 13, color: "var(--muted)" }}>👤 {o.name} | 📞 {o.mobile}</div>
+                    {o.address && <div style={{ fontSize: 12, color: "var(--muted)" }}>📍 {o.address}</div>}
+                    {o.note && <div style={{ fontSize: 12, color: "var(--muted)" }}>📝 {o.note}</div>}
+                    <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>🕐 {o.time}</div>
+                    <div style={{ marginTop: 6 }}>
+                      {o.discount > 0 && <span style={{ fontSize: 12, color: "var(--muted)", textDecoration: "line-through", marginRight: 8 }}>৳{o.originalPrice}</span>}
+                      <span style={{ fontWeight: 700, color: "var(--green)" }}>৳{o.totalPrice}</span>
+                      {o.promo && <span style={{ fontSize: 11, marginLeft: 8, background: "rgba(232,160,32,0.1)", color: "var(--gold)", padding: "2px 6px", borderRadius: 4 }}>{o.promo}</span>}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 10px", borderRadius: 6, background: `${statusColor[o.status]}22`, color: statusColor[o.status], border: `1px solid ${statusColor[o.status]}` }}>{statusLabel[o.status]}</span>
+                    {isAdmin && <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                      {o.status !== "confirmed" && <button className="btn" style={{ fontSize: 10, padding: "3px 8px", background: "rgba(42,125,225,0.15)", color: "var(--blue)", border: "1px solid var(--blue)" }} onClick={() => updateOrderStatus(o.id, "confirmed")}>কনফার্ম</button>}
+                      {o.status !== "delivered" && <button className="btn" style={{ fontSize: 10, padding: "3px 8px", background: "rgba(39,174,96,0.15)", color: "var(--green)", border: "1px solid var(--green)" }} onClick={() => updateOrderStatus(o.id, "delivered")}>ডেলিভারি</button>}
+                      {o.status !== "cancelled" && <button className="btn" style={{ fontSize: 10, padding: "3px 8px", background: "rgba(232,64,64,0.15)", color: "var(--red)", border: "1px solid var(--red)" }} onClick={() => updateOrderStatus(o.id, "cancelled")}>বাতিল</button>}
+                      <button className="btn" style={{ fontSize: 10, padding: "3px 8px", background: "rgba(232,64,64,0.15)", color: "var(--red)", border: "1px solid var(--red)" }} onClick={() => deleteOrder(o.id)}>মুছুন</button>
+                    </div>}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Product Modal */}
+      {(modal === "addProduct" || modal === "editProduct") && (
+        <div className="modal-overlay" onClick={() => setModal(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 20, color: "var(--gold)" }}>{modal === "addProduct" ? "নতুন পণ্য" : "পণ্য সম্পাদনা"}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div><label>পণ্যের নাম</label><input value={form.name||""} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
+              <div><label>মূল্য (টাকা)</label><input type="number" value={form.price||""} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} /></div>
+              <div><label>স্টক পরিমাণ</label><input type="number" value={form.stock||""} onChange={e => setForm(f => ({ ...f, stock: e.target.value }))} /></div>
+              <div><label>বিবরণ</label><input value={form.desc||""} onChange={e => setForm(f => ({ ...f, desc: e.target.value }))} /></div>
+              <div><label>ছবি</label><ImageInputWithUpload value={form.img||""} onChange={v => setForm(f => ({ ...f, img: v }))} previewStyle={{ width: "100%", height: 120, objectFit: "cover", borderRadius: 8 }} /></div>
+            </div>
+            <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+              <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => setModal(null)}>বাতিল</button>
+              <button className="btn btn-gold" style={{ flex: 1 }} onClick={saveProduct}>সেভ করুন</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Promo Modal */}
+      {(modal === "addPromo" || modal === "editPromo") && (
+        <div className="modal-overlay" onClick={() => setModal(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 20, color: "var(--gold)" }}>{modal === "addPromo" ? "নতুন প্রোমো কোড" : "প্রোমো সম্পাদনা"}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div><label>কোড</label><input value={promoForm.code||""} onChange={e => setPromoForm(f => ({ ...f, code: e.target.value.toUpperCase() }))} placeholder="যেমন: RAHIM10" /></div>
+              <div><label>ধরন</label>
+                <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+                  {[["percent","% শতাংশ"], ["flat","৳ নির্দিষ্ট টাকা"]].map(([v,l]) => (
+                    <div key={v} onClick={() => setPromoForm(f => ({ ...f, type: v }))} style={{ flex: 1, padding: "10px 8px", borderRadius: 8, border: `1px solid ${promoForm.type===v?"var(--gold)":"var(--border)"}`, background: promoForm.type===v?"rgba(232,160,32,0.1)":"var(--navy3)", cursor: "pointer", textAlign: "center", fontSize: 13, color: promoForm.type===v?"var(--gold)":"var(--muted)" }}>{l}</div>
+                  ))}
+                </div>
+              </div>
+              <div><label>ছাড়ের পরিমাণ</label><input type="number" value={promoForm.discount||""} onChange={e => setPromoForm(f => ({ ...f, discount: e.target.value }))} placeholder={promoForm.type === "percent" ? "যেমন: 10 (১০%)" : "যেমন: 50 (৫০ টাকা)"} /></div>
+            </div>
+            <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+              <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => setModal(null)}>বাতিল</button>
+              <button className="btn btn-gold" style={{ flex: 1 }} onClick={savePromo}>সেভ করুন</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ===================== COMPLAINTS ADMIN TAB =====================
+function ComplaintsAdminTab({ data, setData, isAdmin }) {
+  const [filter, setFilter] = useState("all");
+  const updateStatus = (id, status) => setData(d => ({ ...d, complaints: (d.complaints||[]).map(c => c.id === id ? { ...c, status } : c) }));
+  const deleteComplaint = (id) => { if (window.confirm("কমপ্লেইনটি মুছে দেবেন?")) setData(d => ({ ...d, complaints: (d.complaints||[]).filter(c => c.id !== id) })); };
+
+  const typeLabel = { product: "🛍️ পণ্য", staff: "👤 কর্মচারী", other: "💬 অন্যান্য" };
+  const statusColor = { new: "var(--gold)", reviewed: "var(--blue)", resolved: "var(--green)" };
+  const statusLabel = { new: "নতুন", reviewed: "পর্যালোচিত", resolved: "সমাধান" };
+
+  const filtered = (data.complaints||[]).filter(c => filter === "all" || c.status === filter || c.type === filter).sort((a,b) => b.id - a.id);
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
+        <div style={{ fontWeight: 700 }}>কমপ্লেইন ও মতামত ({(data.complaints||[]).length}টি)</div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {[["all","সব"], ["new","নতুন"], ["reviewed","পর্যালোচিত"], ["resolved","সমাধান"], ["product","পণ্য"], ["staff","কর্মচারী"]].map(([k,l]) => (
+            <button key={k} className={`btn ${filter===k?"btn-gold":"btn-ghost"}`} style={{ fontSize: 11, padding: "4px 10px" }} onClick={() => setFilter(k)}>{l}</button>
+          ))}
+        </div>
+      </div>
+      {filtered.length === 0 && <div style={{ color: "var(--muted)", textAlign: "center", padding: 40 }}>কোনো কমপ্লেইন নেই।</div>}
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {filtered.map(c => (
+          <div key={c.id} className="card" style={{ padding: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
+                  <span style={{ fontSize: 12, background: "rgba(232,160,32,0.1)", color: "var(--gold)", padding: "2px 8px", borderRadius: 4 }}>{typeLabel[c.type]}</span>
+                  {c.subject && <span style={{ fontSize: 12, color: "var(--muted)" }}>→ {c.subject}</span>}
+                </div>
+                <div style={{ fontWeight: 500, marginBottom: 4 }}>👤 {c.name} {c.mobile && `| 📞 ${c.mobile}`}</div>
+                <div style={{ fontSize: 14, color: "var(--text)", marginBottom: 4, lineHeight: 1.6 }}>{c.message}</div>
+                <div style={{ fontSize: 11, color: "var(--muted)" }}>🕐 {c.time}</div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 10px", borderRadius: 6, background: `${statusColor[c.status||"new"]}22`, color: statusColor[c.status||"new"], border: `1px solid ${statusColor[c.status||"new"]}` }}>{statusLabel[c.status||"new"]}</span>
+                {isAdmin && <div style={{ display: "flex", gap: 4 }}>
+                  {c.status !== "reviewed" && <button className="btn" style={{ fontSize: 10, padding: "3px 8px", background: "rgba(42,125,225,0.15)", color: "var(--blue)", border: "1px solid var(--blue)" }} onClick={() => updateStatus(c.id, "reviewed")}>পর্যালোচনা</button>}
+                  {c.status !== "resolved" && <button className="btn" style={{ fontSize: 10, padding: "3px 8px", background: "rgba(39,174,96,0.15)", color: "var(--green)", border: "1px solid var(--green)" }} onClick={() => updateStatus(c.id, "resolved")}>সমাধান</button>}
+                  <button className="btn" style={{ fontSize: 10, padding: "3px 8px", background: "rgba(232,64,64,0.15)", color: "var(--red)", border: "1px solid var(--red)" }} onClick={() => deleteComplaint(c.id)}>মুছুন</button>
+                </div>}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ===================== MAIN APP =====================
 export default function App() {
   const [data, setDataRaw] = useState(INITIAL_DATA);
@@ -1465,6 +1950,9 @@ export default function App() {
           {activePage === "home" && <PublicHome data={data} />}
           {activePage === "staff" && <StaffPage data={data} />}
           {activePage === "events" && <EventsPage data={data} />}
+          {activePage === "products" && <ProductsPage data={data} onOrder={(order) => updateData(d => ({ ...d, orders: [...(d.orders||[]), order] }))} />}
+          {activePage === "orders" && <OrdersPage data={data} onOrder={(order) => updateData(d => ({ ...d, orders: [...(d.orders||[]), order] }))} />}
+          {activePage === "complaints" && <ComplaintsPage data={data} onSubmit={(c) => updateData(d => ({ ...d, complaints: [...(d.complaints||[]), c] }))} />}
           {activePage === "attendance" && <AttendancePage onSubmit={handleAttendanceSubmit} />}
           {activePage === "dashboard" && role && <Dashboard data={data} setData={updateData} role={role} onChangePassword={() => setShowPassChange(true)} />}
           {activePage === "dashboard" && !role && (
