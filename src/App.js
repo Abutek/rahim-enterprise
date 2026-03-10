@@ -1528,9 +1528,9 @@ function OrdersPage({ data, onOrder }) {
           <div><label>ঠিকানা</label><input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="ডেলিভারি ঠিকানা" /></div>
           <div>
             <label>পরিমাণ</label>
-            <input type="number" min="1" max={selected.stock} value={form.qty} onChange={e => setForm(f => ({ ...f, qty: Math.max(1, parseInt(e.target.value)||1) }))} />
-            {form.qty > selected.stock && <div style={{ fontSize: 12, color: "var(--red)", marginTop: 4 }}>❌ স্টকে মাত্র {selected.stock}টি আছে!</div>}
-            {form.qty <= selected.stock && selected.stock <= 5 && <div style={{ fontSize: 12, color: "var(--gold)", marginTop: 4 }}>⚠️ মাত্র {selected.stock}টি স্টকে আছে!</div>}
+            <input type="number" min="1" max={selectedProduct?.stock || 999} value={form.qty} onChange={e => setForm(f => ({ ...f, qty: Math.max(1, parseInt(e.target.value)||1) }))} />
+            {selectedProduct && form.qty > selectedProduct.stock && <div style={{ fontSize: 12, color: "var(--red)", marginTop: 4 }}>❌ স্টকে মাত্র {selectedProduct.stock}টি আছে!</div>}
+            {selectedProduct && form.qty <= selectedProduct.stock && selectedProduct.stock <= 5 && <div style={{ fontSize: 12, color: "var(--gold)", marginTop: 4 }}>⚠️ মাত্র {selectedProduct.stock}টি স্টকে আছে!</div>}
           </div>
           <div>
             <label>প্রোমো কোড (ঐচ্ছিক)</label>
