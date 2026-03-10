@@ -346,7 +346,7 @@ function Header({ onLoginClick, role, onLogout, activePage, setActivePage, logo,
           </div>
         </div>
         <nav style={{ display: "flex", gap: 4, alignItems: "center", flexWrap: "wrap" }}>
-          {[["home", "হোম"], ["staff", "কর্মচারী"], ["events", "ইভেন্ট"], ["products", "পণ্য"], ["orders", "অর্ডার"], ["complaints", "কমপ্লেইন"], ["attendance", "হাজিরা"]].map(([k, v]) => (
+          {[["home", "হোম"], ["staff", "কর্মচারী"], ["events", "ইভেন্ট"], ["products", "পণ্য"], ["orders", "অর্ডার"], ["complaints", "কমপ্লেইন"], ["tracking", "ট্র্যাকিং"], ["attendance", "হাজিরা"]].map(([k, v]) => (
             <a key={k} className={activePage === k ? "active" : ""} onClick={() => setActivePage(k)}>{v}</a>
           ))}
           {role === null ? (
@@ -1526,7 +1526,12 @@ function OrdersPage({ data, onOrder }) {
           <div><label>আপনার নাম *</label><input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="নাম লিখুন" /></div>
           <div><label>মোবাইল নম্বর *</label><input value={form.mobile} onChange={e => setForm(f => ({ ...f, mobile: e.target.value }))} placeholder="01XXXXXXXXX" /></div>
           <div><label>ঠিকানা</label><input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="ডেলিভারি ঠিকানা" /></div>
-          <div><label>পরিমাণ</label><input type="number" min="1" value={form.qty} onChange={e => setForm(f => ({ ...f, qty: Math.max(1, parseInt(e.target.value)||1) }))} /></div>
+          <div>
+            <label>পরিমাণ</label>
+            <input type="number" min="1" max={selected.stock} value={form.qty} onChange={e => setForm(f => ({ ...f, qty: Math.max(1, parseInt(e.target.value)||1) }))} />
+            {form.qty > selected.stock && <div style={{ fontSize: 12, color: "var(--red)", marginTop: 4 }}>❌ স্টকে মাত্র {selected.stock}টি আছে!</div>}
+            {form.qty <= selected.stock && selected.stock <= 5 && <div style={{ fontSize: 12, color: "var(--gold)", marginTop: 4 }}>⚠️ মাত্র {selected.stock}টি স্টকে আছে!</div>}
+          </div>
           <div>
             <label>প্রোমো কোড (ঐচ্ছিক)</label>
             <div style={{ display: "flex", gap: 8 }}>
@@ -1918,6 +1923,93 @@ function ComplaintsAdminTab({ data, setData, isAdmin }) {
   );
 }
 
+
+// ===================== ORDER TRACKING PAGE (Public) =====================
+function TrackingPage({ data }) {
+  const [mobile, setMobile] = useState("");
+  const [result, setResult] = useState(null);
+  const [searched, setSearched] = useState(false);
+
+  const search = () => {
+    if (!mobile.trim()) return;
+    const orders = (data.orders || []).filter(o => o.mobile === mobile.trim()).sort((a,b) => b.id - a.id);
+    setResult(orders);
+    setSearched(true);
+  };
+
+  const statusColor = { pending: "var(--gold)", confirmed: "var(--blue)", delivered: "var(--green)", cancelled: "var(--red)" };
+  const statusLabel = { pending: "⏳ পেন্ডিং", confirmed: "✅ কনফার্ম", delivered: "🎉 ডেলিভারি সম্পন্ন", cancelled: "❌ বাতিল" };
+
+  return (
+    <div style={{ maxWidth: 600, margin: "40px auto", padding: "0 20px" }}>
+      <div className="section-title" style={{ marginBottom: 24 }}>📦 অর্ডার ট্র্যাকিং</div>
+      <div className="card" style={{ padding: 24, marginBottom: 20 }}>
+        <div style={{ fontSize: 14, color: "var(--muted)", marginBottom: 12 }}>আপনার মোবাইল নম্বর দিয়ে অর্ডারের অবস্থান জানুন</div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <input value={mobile} onChange={e => setMobile(e.target.value)} onKeyDown={e => e.key === "Enter" && search()} placeholder="01XXXXXXXXX" style={{ flex: 1 }} />
+          <button className="btn btn-gold" style={{ padding: "0 20px" }} onClick={search}>খুঁজুন</button>
+        </div>
+      </div>
+
+      {searched && result !== null && result.length === 0 && (
+        <div className="card" style={{ padding: 24, textAlign: "center", color: "var(--muted)" }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
+          <div>এই নম্বরে কোনো অর্ডার পাওয়া যায়নি।</div>
+        </div>
+      )}
+
+      {result && result.map(o => (
+        <div key={o.id} className="card" style={{ padding: 20, marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 16, color: "var(--gold)", marginBottom: 4 }}>{o.productName}</div>
+              <div style={{ fontSize: 13, color: "var(--muted)" }}>পরিমাণ: {o.qty} | মূল্য: ৳{o.totalPrice}</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>📅 {o.time}</div>
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 700, padding: "6px 12px", borderRadius: 8, background: `${statusColor[o.status]}22`, color: statusColor[o.status], border: `1px solid ${statusColor[o.status]}`, whiteSpace: "nowrap" }}>
+              {statusLabel[o.status] || o.status}
+            </span>
+          </div>
+
+          {/* Assigned Staff */}
+          {o.assignedStaff && (
+            <div style={{ background: "rgba(42,125,225,0.08)", border: "1px solid rgba(42,125,225,0.25)", borderRadius: 8, padding: "12px 14px", marginBottom: 12 }}>
+              <div style={{ fontSize: 11, color: "var(--blue)", fontWeight: 700, marginBottom: 6, letterSpacing: 1 }}>🚴 ডেলিভারি কর্মী</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--navy3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>👤</div>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>{o.assignedStaff.name}</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)" }}>📞 {o.assignedStaff.mobile}</div>
+                  <div style={{ fontSize: 11, color: "var(--muted)" }}>📍 {o.assignedStaff.area}</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tracking Timeline */}
+          {o.tracking && o.tracking.length > 0 && (
+            <div>
+              <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 600, marginBottom: 10 }}>📍 ট্র্যাকিং ইতিহাস</div>
+              <div style={{ position: "relative", paddingLeft: 20 }}>
+                <div style={{ position: "absolute", left: 7, top: 6, bottom: 6, width: 2, background: "var(--border)" }} />
+                {o.tracking.map((t, i) => (
+                  <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 10, position: "relative" }}>
+                    <div style={{ width: 12, height: 12, borderRadius: "50%", background: i === o.tracking.length-1 ? "var(--green)" : "var(--border)", border: `2px solid ${i === o.tracking.length-1 ? "var(--green)" : "var(--muted)"}`, flexShrink: 0, marginTop: 2, position: "absolute", left: -16 }} />
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: i === o.tracking.length-1 ? 600 : 400, color: i === o.tracking.length-1 ? "var(--text)" : "var(--muted)" }}>{t.status}</div>
+                      <div style={{ fontSize: 11, color: "var(--muted)" }}>{t.time}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ===================== MAIN APP =====================
 export default function App() {
   const [data, setDataRaw] = useState(INITIAL_DATA);
@@ -2020,9 +2112,10 @@ export default function App() {
           {activePage === "home" && <PublicHome data={data} />}
           {activePage === "staff" && <StaffPage data={data} />}
           {activePage === "events" && <EventsPage data={data} />}
-          {activePage === "products" && <ProductsPage data={data} onOrder={(order) => updateData(d => ({ ...d, orders: [...(d.orders||[]), order] }))} />}
-          {activePage === "orders" && <OrdersPage data={data} onOrder={(order) => updateData(d => ({ ...d, orders: [...(d.orders||[]), order] }))} />}
+          {activePage === "products" && <ProductsPage data={data} onOrder={(order) => updateData(d => ({ ...d, orders: [...(d.orders||[]), order], products: (d.products||[]).map(p => p.id === order.productId ? { ...p, stock: Math.max(0, p.stock - order.qty) } : p) }))} />}
+          {activePage === "orders" && <OrdersPage data={data} onOrder={(order) => updateData(d => ({ ...d, orders: [...(d.orders||[]), order], products: (d.products||[]).map(p => p.id === order.productId ? { ...p, stock: Math.max(0, p.stock - order.qty) } : p) }))} />}
           {activePage === "complaints" && <ComplaintsPage data={data} onSubmit={(c) => updateData(d => ({ ...d, complaints: [...(d.complaints||[]), c] }))} />}
+          {activePage === "tracking" && <TrackingPage data={data} />}
           {activePage === "attendance" && <AttendancePage onSubmit={handleAttendanceSubmit} />}
           {activePage === "dashboard" && role && <Dashboard data={data} setData={updateData} role={role} onChangePassword={() => setShowPassChange(true)} />}
           {activePage === "dashboard" && !role && (
