@@ -82,7 +82,7 @@ const lsRemove = (key) => { try { localStorage.removeItem(key); } catch {} };
 // Netlify Blobs — server থেকে ডেটা লোড করুন
 const blobLoad = async (key) => {
   try {
-    const res = await fetch(`/api/data?key=${encodeURIComponent(key)}`);
+    const res = await fetch(`/.netlify/functions/data?key=${encodeURIComponent(key)}`);
     if (!res.ok) return null;
     const json = await res.json();
     if (!json.value) return null;
@@ -96,7 +96,7 @@ const blobLoad = async (key) => {
 // Netlify Blobs — server-এ ডেটা সেভ করুন
 const blobSave = async (key, value) => {
   try {
-    const res = await fetch("/api/data", {
+    const res = await fetch("/.netlify/functions/data", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ key, value: JSON.stringify(value) }),
